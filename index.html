@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egg Empire - Das ultimative Eier-Imperium</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary-gold: #FFD700;
+            --secondary-gold: #FFA500;
+            --dark-purple: #2D1B69;
+            --light-purple: #9D4EDD;
+            --cyan: #00F5FF;
+            --green: #00FF88;
+            --red: #FF3366;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animierter Hintergrund */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="stars" patternUnits="userSpaceOnUse" width="100" height="100"><circle cx="25" cy="25" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="1.5" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23stars)"/></svg>');
+            animation: drift 60s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes drift {
+            from { transform: translateX(-100px) translateY(-100px); }
+            to { transform: translateX(100px) translateY(100px); }
+        }
+
+        /* Layout */
+        .game-container {
+            display: grid;
+            grid-template-areas: 
+                "header header header"
+                "main upgrades stats"
+                "main upgrades achievements";
+            grid-template-columns: 1fr 380px 320px;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 3em;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary-gold), var(--cyan), var(--green));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--primary-gold);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Hauptspielbereich */
+        .main-game {
+            grid-area: main;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* Das Ei - jetzt mit verschiedenen Evolutionsstufen */
+        .egg-evolution {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .egg {
+            width: 250px;
+            height: 312px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            user-select: none;
+            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.3));
+        }
+
+        .egg.basic {
+            background: linear-gradient(145deg, #FFF8DC 0%, #FFEBCD 50%, #F0E68C 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 4px solid var(--primary-gold);
+        }
+
+        .egg.golden {
+            background: linear-gradient(145deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 4px solid #FF4500;
+            animation: goldenPulse 2s ease-in-out infinite;
+        }
+
+        .egg.diamond {
+            background: linear-gradient(145deg, #B9F2FF 0%, #00BFFF 50%, #1E90FF 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 4px solid var(--cyan);
+            animation: diamondSparkle 3s ease-in-out infinite;
+        }
+
+        .egg.cosmic {
+            background: linear-gradient(145deg, #9D4EDD 0%, #C77DFF 50%, #E0AAFF 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 4px solid var(--light-purple);
+            animation: cosmicGlow 4s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .egg.cosmic::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: cosmicSweep 3s linear infinite;
+        }
+
+        @keyframes goldenPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes diamondSparkle {
+            0%, 100% { filter: brightness(1) saturate(1); }
+            25% { filter: brightness(1.3) saturate(1.2); }
+            50% { filter: brightness(1.1) saturate(1.1); }
+            75% { filter: brightness(1.4) saturate(1.3); }
+        }
+
+        @keyframes cosmicGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(157, 78, 221, 0.6); }
+            50% { box-shadow: 0 0 60px rgba(157, 78, 221, 1), 0 0 100px rgba(199, 125, 255, 0.5); }
+        }
+
+        @keyframes cosmicSweep {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .egg:hover {
+            transform: scale(1.05);
+        }
+
+        .egg:active {
+            transform: scale(0.98);
+        }
+
+        /* Ei-Highlight */
+        .egg::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 50%;
+            height: 35%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+
+        /* Klick-Effekte verbessert */
+        .click-effect {
+            position: absolute;
+            pointer-events: none;
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary-gold), var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: clickFloat 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            z-index: 100;
+        }
+
+        @keyframes clickFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.8);
+            }
+            20% {
+                transform: translateY(-20px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-150px) scale(0.5);
+            }
+        }
+
+        /* Partikel verbessert */
+        .particle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleExplosion 1.5s ease-out forwards;
+        }
+
+        .particle.gold { background: radial-gradient(circle, #FFD700, #FFA500); }
+        .particle.cyan { background: radial-gradient(circle, #00F5FF, #0080FF); }
+        .particle.green { background: radial-gradient(circle, #00FF88, #00CC66); }
+        .particle.purple { background: radial-gradient(circle, #9D4EDD, #7B2CBF); }
+
+        @keyframes particleExplosion {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--random-x), var(--random-y)) scale(0);
+            }
+        }
+
+        /* Upgrades Sektion */
+        .upgrades-section {
+            grid-area: upgrades;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 80vh;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-gold);
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        /* Upgrade-Kategorien Tabs */
+        .upgrade-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .tab.active {
+            background: linear-gradient(45deg, var(--primary-gold), var(--secondary-gold));
+            color: black;
+            font-weight: 600;
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Upgrade Items verbessert */
+        .upgrade-item {
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upgrade-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.3s ease;
+        }
+
+        .upgrade-item:hover::before {
+            left: 100%;
+        }
+
+        .upgrade-item:hover {
+            transform: translateX(3px);
+            border-color: var(--primary-gold);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .upgrade-item.can-afford {
+            border-color: var(--green);
+            background: linear-gradient(135deg, var(--glass-bg), rgba(0, 255, 136, 0.1));
+        }
+
+        .upgrade-item.cannot-afford {
+            opacity: 0.6;
+            filter: grayscale(0.3);
+            cursor: not-allowed;
+        }
+
+        .upgrade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .upgrade-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--primary-gold);
+        }
+
+        .upgrade-cost {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--cyan);
+            background: rgba(0, 245, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .upgrade-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-count {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .upgrade-production {
+            color: var(--secondary-gold);
+            font-weight: 600;
+        }
+
+        .upgrade-description {
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        /* Stats Sektion */
+        .stats-section {
+            grid-area: stats;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* Prestige verbessert */
+        .prestige-container {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.1));
+            border: 2px solid var(--primary-gold);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .prestige-button {
+            background: linear-gradient(45deg, var(--primary-gold), var(--secondary-gold));
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+            margin-top: 15px;
+        }
+
+        .prestige-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        }
+
+        .prestige-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Erfolge Sektion */
+        .achievements-section {
+            grid-area: achievements;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 400px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .achievement {
+            background: rgba(0,0,0,0.2);
+            border-left: 4px solid var(--red);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .achievement.unlocked {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 136, 0.05));
+            border-left-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .achievement-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-gold);
+        }
+
+        .achievement-desc {
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.3;
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-gold), var(--secondary-gold));
+            transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* Multiplier Display */
+        .multiplier-display {
+            position: fixed;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--primary-gold);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .multiplier-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2em;
+            font-weight: 900;
+            color: var(--primary-gold);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .game-container {
+                grid-template-areas: 
+                    "header header"
+                    "main upgrades"
+                    "stats achievements";
+                grid-template-columns: 1fr 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-areas: 
+                    "header"
+                    "main"
+                    "upgrades"
+                    "stats"
+                    "achievements";
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            
+            .egg {
+                width: 200px;
+                height: 250px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .multiplier-display {
+                display: none;
+            }
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold));
+            color: #000;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 9999;
+            animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-width: 350px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Auto-clicker Effekt verbessert */
+        .auto-clicker-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, var(--green), transparent);
+            border-radius: 50%;
+            animation: autoClickPulse 0.8s ease-out;
+        }
+
+        @keyframes autoClickPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0.6;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+
+        /* Special Effects */
+        .rainbow-text {
+            background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 3s ease-in-out infinite;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--primary-gold), var(--secondary-gold));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, var(--secondary-gold), var(--primary-gold));
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Multiplier Display -->
+    <div class="multiplier-display" id="multiplierDisplay" style="display: none;">
+        <div style="font-size: 0.9em; margin-bottom: 5px;">Klick-Bonus</div>
+        <div class="multiplier-value" id="multiplierValue">x1</div>
+    </div>
+
+    <script>
+        // 🎮 HAUPTSPIEL-KLASSE
+        class EggEmpire {
+            constructor() {
+                // Grundwerte
+                this.eggs = 0;
+                this.totalEggs = 0;
+                this.totalEggsAllTime = 0;
+                this.clickPower = 1;
+                this.baseClickPower = 1;
+                this.eggsPerSecond = 0;
+                this.totalClicks = 0;
+                this.goldenEggs = 0;
+                this.prestigeLevel = 0;
+                this.playTimeStart = Date.now();
+                this.playTime = 0;
+                this.highestEPS = 0;
+                
+                // Kategorien für Upgrades
+                this.currentCategory = 'producers';
+                this.eggEvolution = 'basic';
+                
+                // Producer-Upgrades (Cookie Clicker Style)
+                this.producers = [
+                    {
+                        id: 'farmer',
+                        name: '👨‍🌾 Eier-Bauer',
+                        emoji: '👨‍🌾',
+                        baseCost: 15,
+                        cost: 15,
+                        count: 0,
+                        baseProduction: 0.1,
+                        production: 0.1,
+                        description: 'Ein fleißiger Bauer sammelt Eier von wilden Hühnern. Einfach aber effektiv!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'chicken_coop',
+                        name: '🐔 Hühnerstall',
+                        emoji: '🐔',
+                        baseCost: 100,
+                        cost: 100,
+                        count: 0,
+                        baseProduction: 1,
+                        production: 1,
+                        description: 'Ein gemütlicher Stall voller glücklicher Hühner. Gack gack!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'egg_farm',
+                        name: '🚜 Eier-Farm',
+                        emoji: '🚜',
+                        baseCost: 1100,
+                        cost: 1100,
+                        count: 0,
+                        baseProduction: 8,
+                        production: 8,
+                        description: 'Eine riesige Farm mit hunderten Hühnern. Industrielle Eierproduktion!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'hatchery',
+                        name: '🏭 Bruterei',
+                        emoji: '🏭',
+                        baseCost: 12000,
+                        cost: 12000,
+                        count: 0,
+                        baseProduction: 47,
+                        production: 47,
+                        description: 'High-Tech Brutstätten für maximale Eierausbeute. Wissenschaft!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'egg_factory',
+                        name: '⚙️ Eier-Fabrik',
+                        emoji: '⚙️',
+                        baseCost: 130000,
+                        cost: 130000,
+                        count: 0,
+                        baseProduction: 260,
+                        production: 260,
+                        description: 'Vollautomatisierte Eierproduktion am Fließband. Effizienz pur!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'genetics_lab',
+                        name: '🧬 Gen-Labor',
+                        emoji: '🧬',
+                        baseCost: 1400000,
+                        cost: 1400000,
+                        count: 0,
+                        baseProduction: 1400,
+                        production: 1400,
+                        description: 'Gentechnisch optimierte Super-Hühner legen Premium-Eier!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'time_machine',
+                        name: '⏰ Zeitmaschine',
+                        emoji: '⏰',
+                        baseCost: 20000000,
+                        cost: 20000000,
+                        count: 0,
+                        baseProduction: 7800,
+                        production: 7800,
+                        description: 'Holt Eier aus der Vergangenheit und Zukunft. Temporal genial!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'egg_dimension',
+                        name: '🌀 Eier-Dimension',
+                        emoji: '🌀',
+                        baseCost: 330000000,
+                        cost: 330000000,
+                        count: 0,
+                        baseProduction: 44000,
+                        production: 44000,
+                        description: 'Eine ganze Dimension voller Eier! Multiversal mächtig!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'cosmic_egg',
+                        name: '🌌 Kosmisches Ei',
+                        emoji: '🌌',
+                        baseCost: 5100000000,
+                        cost: 5100000000,
+                        count: 0,
+                        baseProduction: 260000,
+                        production: 260000,
+                        description: 'Das Ur-Ei des Universums gebiert unendliche Eier-Power!',
+                        category: 'producers'
+                    },
+                    {
+                        id: 'reality_bender',
+                        name: '🔮 Realitäts-Manipulator',
+                        emoji: '🔮',
+                        baseCost: 75000000000,
+                        cost: 75000000000,
+                        count: 0,
+                        baseProduction: 1600000,
+                        production: 1600000,
+                        description: 'Verändert die Realität selbst, um mehr Eier zu erschaffen!',
+                        category: 'producers'
+                    }
+                ];
+
+                // Multiplier-Upgrades
+                this.multiplierUpgrades = [
+                    {
+                        id: 'click_power_1',
+                        name: '💪 Stärkere Finger',
+                        emoji: '💪',
+                        cost: 100,
+                        purchased: false,
+                        effect: 2,
+                        description: 'Verdoppelt deine Klick-Power! Pumpe die Muskeln!',
+                        category: 'multipliers',
+                        type: 'click_multiplier'
+                    },
+                    {
+                        id: 'click_power_2',
+                        name: '🦾 Cyber-Hand',
+                        emoji: '🦾',
+                        cost: 10000,
+                        purchased: false,
+                        effect: 5,
+                        description: 'Eine bionische Hand für 5x Klick-Power! Cyborg-Style!',
+                        category: 'multipliers',
+                        type: 'click_multiplier'
+                    },
+                    {
+                        id: 'production_1',
+                        name: '📈 Effizienz-Boost',
+                        emoji: '📈',
+                        cost: 50000,
+                        purchased: false,
+                        effect: 2,
+                        description: 'Verdoppelt die Produktion aller Gebäude! Optimierung!',
+                        category: 'multipliers',
+                        type: 'production_multiplier'
+                    },
+                    {
+                        id: 'production_2',
+                        name: '🚀 Turbo-Modus',
+                        emoji: '🚀',
+                        cost: 1000000,
+                        purchased: false,
+                        effect: 3,
+                        description: 'Alle Produzenten arbeiten 3x schneller! Warp-Speed!',
+                        category: 'multipliers',
+                        type: 'production_multiplier'
+                    }
+                ];
+
+                // Spezial-Upgrades
+                this.specialUpgrades = [
+                    {
+                        id: 'auto_clicker',
+                        name: '🤖 Auto-Clicker',
+                        emoji: '🤖',
+                        cost: 1000,
+                        purchased: false,
+                        description: 'Klickt automatisch 1x pro Sekunde auf das Ei!',
+                        category: 'special',
+                        type: 'auto_clicker'
+                    },
+                    {
+                        id: 'golden_chance',
+                        name: '🎰 Glücks-Boost',
+                        emoji: '🎰',
+                        cost: 100000,
+                        purchased: false,
+                        description: 'Erhöht die Chance auf goldene Klicks um 50%!',
+                        category: 'special',
+                        type: 'golden_chance'
+                    },
+                    {
+                        id: 'offline_production',
+                        name: '💤 Offline-Produktion',
+                        emoji: '💤',
+                        cost: 500000,
+                        purchased: false,
+                        description: 'Produziert Eier auch wenn du offline bist!',
+                        category: 'special',
+                        type: 'offline'
+                    }
+                ];
+
+                // Erfolge erweitert
+                this.achievements = [
+                    { id: 'first_click', name: '🆕 Erster Klick', desc: 'Klicke dein erstes Ei!', condition: () => this.totalClicks >= 1, unlocked: false },
+                    { id: 'click_100', name: '💯 Klick-Starter', desc: 'Klicke 100 mal!', condition: () => this.totalClicks >= 100, unlocked: false },
+                    { id: 'click_1000', name: '🏆 Klick-Meister', desc: 'Klicke 1000 mal!', condition: () => this.totalClicks >= 1000, unlocked: false },
+                    { id: 'click_10000', name: '🌟 Klick-Legende', desc: 'Klicke 10000 mal!', condition: () => this.totalClicks >= 10000, unlocked: false },
+                    
+                    { id: 'eggs_100', name: '🥚 Sammler', desc: 'Besitze 100 Eier!', condition: () => this.totalEggsAllTime >= 100, unlocked: false },
+                    { id: 'eggs_1000', name: '📦 Großsammler', desc: 'Besitze 1000 Eier!', condition: () => this.totalEggsAllTime >= 1000, unlocked: false },
+                    { id: 'eggs_1m', name: '💎 Eier-Millionär', desc: 'Besitze 1 Million Eier!', condition: () => this.totalEggsAllTime >= 1000000, unlocked: false },
+                    { id: 'eggs_1b', name: '👑 Eier-Milliardär', desc: 'Besitze 1 Milliarde Eier!', condition: () => this.totalEggsAllTime >= 1000000000, unlocked: false },
+                    
+                    { id: 'first_producer', name: '👨‍🌾 Erster Arbeiter', desc: 'Kaufe deinen ersten Produzenten!', condition: () => this.producers.some(p => p.count > 0), unlocked: false },
+                    { id: 'ten_producers', name: '🏭 Produzenten-Imperium', desc: 'Besitze 10 Produzenten verschiedener Arten!', condition: () => this.producers.filter(p => p.count > 0).length >= 5, unlocked: false },
+                    
+                    { id: 'eps_100', name: '⚡ Eier-Strom', desc: 'Produziere 100 Eier/Sek!', condition: () => this.eggsPerSecond >= 100, unlocked: false },
+                    { id: 'eps_10k', name: '🌊 Eier-Tsunami', desc: 'Produziere 10000 Eier/Sek!', condition: () => this.eggsPerSecond >= 10000, unlocked: false },
+                    
+                    { id: 'first_prestige', name: '⭐ Goldener Neustart', desc: 'Mache deinen ersten Prestige!', condition: () => this.goldenEggs > 0, unlocked: false },
+                    { id: 'golden_evolution', name: '🌟 Goldene Evolution', desc: 'Erreiche die goldene Ei-Evolution!', condition: () => this.eggEvolution === 'golden', unlocked: false }
+                ];
+
+                this.lastUpdate = Date.now();
+                this.autoClickerActive = false;
+                this.fastClickMode = false;
+                this.lastClickTime = 0;
+                
+                this.init();
+            }
+
+            // 🚀 INITIALISIERUNG
+            init() {
+                this.loadGame();
+                this.setupEventListeners();
+                this.updateDisplay();
+                this.startGameLoop();
+            }
+
+            // 🖱️ EVENT-LISTENER SETUP
+            setupEventListeners() {
+                const mainEgg = document.getElementById('mainEgg');
+                const prestigeBtn = document.getElementById('prestigeBtn');
+
+                // Ei klicken - DAS WAR DAS FEHLENDE STÜCK!
+                mainEgg.addEventListener('click', (e) => this.clickEgg(e));
+                
+                // Prestige
+                prestigeBtn.addEventListener('click', () => this.prestige());
+
+                // Tab-System
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => this.switchCategory(tab.dataset.category));
+                });
+
+                // Autosave alle 30 Sekunden
+                setInterval(() => this.saveGame(), 30000);
+
+                // Multiplier Display zeigen/verstecken
+                const multiplierDisplay = document.getElementById('multiplierDisplay');
+                mainEgg.addEventListener('mouseenter', () => {
+                    const bonus = this.calculateClickMultiplier();
+                    if (bonus > 1) {
+                        document.getElementById('multiplierValue').textContent = `x${this.formatNumber(bonus, 1)}`;
+                        multiplierDisplay.style.display = 'block';
+                    }
+                });
+                mainEgg.addEventListener('mouseleave', () => {
+                    multiplierDisplay.style.display = 'none';
+                });
+            }
+
+            // 🥚 EI KLICKEN - KERNFUNKTION! (OPTIMIERT FÜR HIGH CPS)
+            clickEgg(event) {
+                // Performance-Optimierung: Throttling für sehr schnelle Klicks
+                const now = Date.now();
+                if (this.lastClickTime && now - this.lastClickTime < 16) { // 60 FPS Limit
+                    this.lastClickTime = now;
+                    return;
+                }
+                this.lastClickTime = now;
+
+                const clickMultiplier = this.calculateClickMultiplier();
+                const finalClickPower = this.baseClickPower * clickMultiplier;
+                
+                // Goldener Klick Chance (reduziert für Performance)
+                const isGoldenClick = this.hasSpecialUpgrade('golden_chance') ? 
+                    Math.random() < 0.15 : Math.random() < 0.1;
+                
+                const eggsGained = isGoldenClick ? finalClickPower * 10 : finalClickPower;
+                
+                this.eggs += eggsGained;
+                this.totalEggs += eggsGained;
+                this.totalEggsAllTime += eggsGained;
+                this.totalClicks++;
+
+                // Weniger Effekte bei schnellen Klicks für Performance
+                if (this.totalClicks % 3 === 0 || isGoldenClick) { // Nur jeden 3. Klick Effekte
+                    this.createClickEffect(event, eggsGained, isGoldenClick);
+                }
+                
+                if (this.totalClicks % 5 === 0 || isGoldenClick) { // Noch weniger Partikel
+                    this.createParticles(event, isGoldenClick);
+                }
+                
+                // Sound nur bei besonderen Klicks oder weniger häufig
+                if (isGoldenClick) {
+                    this.playClickSound(true, this.totalClicks);
+                } else if (this.totalClicks % 5 === 0) { // Jeden 5. Klick
+                    this.playClickSound(false, this.totalClicks);
+                }
+                
+                // Display-Update wird vom Game-Loop übernommen für bessere Performance
+                if (!this.fastClickMode) {
+                    this.updateEggEvolution();
+                    this.checkAchievements();
+                }
+            }
+
+            // ✨ KLICK-EFFEKTE VERBESSERT (PERFORMANCE-OPTIMIERT)
+            createClickEffect(event, eggsGained, isGolden = false) {
+                // Performance: Limitiere Anzahl gleichzeitiger Effekte
+                const existingEffects = event.target.parentNode.querySelectorAll('.click-effect');
+                if (existingEffects.length > 5) {
+                    existingEffects[0].remove(); // Entferne ältesten Effekt
+                }
+
+                const effect = document.createElement('div');
+                effect.className = 'click-effect';
+                effect.textContent = '+' + this.formatNumber(eggsGained);
+                
+                if (isGolden) {
+                    effect.style.fontSize = '3em';
+                    effect.classList.add('rainbow-text');
+                }
+                
+                const rect = event.target.getBoundingClientRect();
+                effect.style.left = (event.clientX - rect.left) + 'px';
+                effect.style.top = (event.clientY - rect.top) + 'px';
+                
+                event.target.parentNode.appendChild(effect);
+                
+                setTimeout(() => {
+                    if (effect.parentNode) effect.remove();
+                }, 1200);
+            }
+
+            // 🎆 PARTIKEL-EFFEKTE ERWEITERT (PERFORMANCE-OPTIMIERT)
+            createParticles(event, isGolden = false) {
+                // Performance: Weniger Partikel bei normalem Klick
+                const particleCount = isGolden ? 8 : 4; // Reduziert von 15/8
+                const colors = isGolden ? ['gold', 'cyan', 'purple'] : ['gold', 'cyan'];
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = `particle ${colors[Math.floor(Math.random() * colors.length)]}`;
+                    
+                    const rect = event.target.getBoundingClientRect();
+                    particle.style.left = (event.clientX - rect.left) + 'px';
+                    particle.style.top = (event.clientY - rect.top) + 'px';
+                    
+                    const randomX = (Math.random() - 0.5) * 200; // Reduziert von 300
+                    const randomY = (Math.random() - 0.5) * 200; // Reduziert von 300
+                    particle.style.setProperty('--random-x', randomX + 'px');
+                    particle.style.setProperty('--random-y', randomY + 'px');
+                    
+                    event.target.parentNode.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) particle.remove();
+                    }, 1000); // Reduziert von 1500ms
+                }
+            }
+
+            // 🔊 SOUND-EFFEKTE SYSTEM (VERBESSERT)
+            playClickSound(isGolden = false, clickCount = 0) {
+                try {
+                    // Audio-Context nur einmal erstellen für bessere Performance
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    const audioContext = this.audioContext;
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    const filter = audioContext.createBiquadFilter();
+                    
+                    // Audio-Chain: Oscillator → Filter → Gain → Output
+                    oscillator.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    if (isGolden) {
+                        // 🌟 GOLDENER KLICK - Magischer Sound
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+                        oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
+                        
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(2000, audioContext.currentTime);
+                        filter.Q.setValueAtTime(10, audioContext.currentTime);
+                        
+                        gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.1);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        
+                    } else {
+                        // 🥚 NORMALER KLICK - Variiert je nach CPS und Klick-Count
+                        const clickVariation = (clickCount % 5) + 1;
+                        const baseFreq = 500 + (clickVariation * 50);
+                        
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 0.7, audioContext.currentTime + 0.08);
+                        
+                        filter.type = 'highpass';
+                        filter.frequency.setValueAtTime(300, audioContext.currentTime);
+                        
+                        // Volume basierend auf Klick-Geschwindigkeit
+                        const volume = Math.max(0.03, Math.min(0.08, 0.1 - (this.getClicksPerSecond() * 0.003)));
+                        
+                        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.08);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.08);
+                    }
+                    
+                } catch (e) {
+                    // Audio nicht verfügbar, stummschalten
+                    console.log('Audio nicht verfügbar');
+                }
+            }
+
+            // 🎵 UPGRADE-KAUF SOUND
+            playUpgradeSound() {
+                try {
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    const audioContext = this.audioContext;
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Erfolgs-Sound: Aufsteigende Tonfolge
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2); // G5
+                    
+                    gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.06, audioContext.currentTime + 0.2);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.4);
+                    
+                } catch (e) {
+                    console.log('Audio nicht verfügbar');
+                }
+            }
+
+            // 🌟 PRESTIGE SOUND
+            playPrestigeSound() {
+                try {
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    const audioContext = this.audioContext;
+                    
+                    // Epischer Prestige-Sound mit mehreren Tönen
+                    const frequencies = [523, 659, 784, 1047]; // C5, E5, G5, C6
+                    
+                    frequencies.forEach((freq, index) => {
+                        setTimeout(() => {
+                            const oscillator = audioContext.createOscillator();
+                            const gainNode = audioContext.createGain();
+                            const filter = audioContext.createBiquadFilter();
+                            
+                            oscillator.connect(filter);
+                            filter.connect(gainNode);
+                            gainNode.connect(audioContext.destination);
+                            
+                            oscillator.type = 'sine';
+                            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                            
+                            filter.type = 'lowpass';
+                            filter.frequency.setValueAtTime(3000, audioContext.currentTime);
+                            filter.Q.setValueAtTime(5, audioContext.currentTime);
+                            
+                            gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+                            
+                            oscillator.start(audioContext.currentTime);
+                            oscillator.stop(audioContext.currentTime + 0.6);
+                            
+                        }, index * 100);
+                    });
+                    
+                } catch (e) {
+                    console.log('Audio nicht verfügbar');
+                }
+            }
+
+            // 🏆 ACHIEVEMENT SOUND
+            playAchievementSound() {
+                try {
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || webkitAudioContext)();
+                    }
+                    
+                    const audioContext = this.audioContext;
+                    const oscillator1 = audioContext.createOscillator();
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator1.connect(gainNode);
+                    oscillator2.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Doppel-Ton für Achievement
+                    oscillator1.type = 'sine';
+                    oscillator1.frequency.setValueAtTime(880, audioContext.currentTime);
+                    
+                    oscillator2.type = 'sine';
+                    oscillator2.frequency.setValueAtTime(1100, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    
+                    oscillator1.start(audioContext.currentTime);
+                    oscillator2.start(audioContext.currentTime);
+                    oscillator1.stop(audioContext.currentTime + 0.3);
+                    oscillator2.stop(audioContext.currentTime + 0.3);
+                    
+                } catch (e) {
+                    console.log('Audio nicht verfügbar');
+                }
+            }
+
+            // 📊 KLICKS PRO SEKUNDE BERECHNEN
+            getClicksPerSecond() {
+                const playTimeSeconds = (Date.now() - this.playTimeStart) / 1000;
+                return playTimeSeconds > 0 ? this.totalClicks / playTimeSeconds : 0;
+            }
+
+            // 🏪 UPGRADE KAUFEN
+            buyUpgrade(upgradeId, category) {
+                let upgrade = null;
+                
+                if (category === 'producers') {
+                    upgrade = this.producers.find(u => u.id === upgradeId);
+                    if (!upgrade || this.eggs < upgrade.cost) return;
+                    
+                    this.eggs -= upgrade.cost;
+                    upgrade.count++;
+                    upgrade.cost = Math.floor(upgrade.baseCost * Math.pow(1.15, upgrade.count));
+                    
+                } else if (category === 'multipliers') {
+                    upgrade = this.multiplierUpgrades.find(u => u.id === upgradeId);
+                    if (!upgrade || this.eggs < upgrade.cost || upgrade.purchased) return;
+                    
+                    this.eggs -= upgrade.cost;
+                    upgrade.purchased = true;
+                    
+                } else if (category === 'special') {
+                    upgrade = this.specialUpgrades.find(u => u.id === upgradeId);
+                    if (!upgrade || this.eggs < upgrade.cost || upgrade.purchased) return;
+                    
+                    this.eggs -= upgrade.cost;
+                    upgrade.purchased = true;
+                    
+                    // Spezielle Effekte aktivieren
+                    if (upgradeId === 'auto_clicker') {
+                        this.autoClickerActive = true;
+                    }
+                }
+                
+                this.calculateEggsPerSecond();
+                this.updateDisplay();
+                this.checkAchievements();
+                
+                // Upgrade-Sound abspielen
+                this.playUpgradeSound();
+                
+                // Erfolgs-Notification wenn erstes Upgrade
+                if (this.getTotalUpgrades() === 1) {
+                    this.showNotification('🎉 Erstes Upgrade gekauft!', 'Der Weg zum Eier-Imperium beginnt!');
+                }
+            }
+
+            // 📊 KATEGORIE WECHSELN
+            switchCategory(category) {
+                this.currentCategory = category;
+                
+                // Tab-Styling aktualisieren
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.category === category);
+                });
+                
+                this.updateUpgradesList();
+            }
+
+            // 🔄 EIER PRO SEKUNDE BERECHNEN
+            calculateEggsPerSecond() {
+                let baseEPS = this.producers.reduce((total, producer) => {
+                    return total + (producer.production * producer.count);
+                }, 0);
+
+                // Produktions-Multiplikatoren anwenden
+                const productionMultiplier = this.calculateProductionMultiplier();
+                baseEPS *= productionMultiplier;
+
+                // Goldene Eier Bonus
+                const goldenBonus = 1 + (this.goldenEggs * 0.01);
+                baseEPS *= goldenBonus;
+
+                this.eggsPerSecond = baseEPS;
+                
+                // Höchsten EPS verfolgen
+                if (this.eggsPerSecond > this.highestEPS) {
+                    this.highestEPS = this.eggsPerSecond;
+                }
+            }
+
+            // 🧮 MULTIPLIKATOREN BERECHNEN
+            calculateClickMultiplier() {
+                let multiplier = 1;
+                
+                // Klick-Multiplikatoren
+                this.multiplierUpgrades.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.type === 'click_multiplier') {
+                        multiplier *= upgrade.effect;
+                    }
+                });
+                
+                // Goldene Eier Bonus
+                multiplier *= (1 + this.goldenEggs * 0.01);
+                
+                return multiplier;
+            }
+
+            calculateProductionMultiplier() {
+                let multiplier = 1;
+                
+                this.multiplierUpgrades.forEach(upgrade => {
+                    if (upgrade.purchased && upgrade.type === 'production_multiplier') {
+                        multiplier *= upgrade.effect;
+                    }
+                });
+                
+                return multiplier;
+            }
+
+            // 🌟 EI-EVOLUTION SYSTEM
+            updateEggEvolution() {
+                const egg = document.getElementById('mainEgg');
+                const evolutionThresholds = {
+                    basic: 0,
+                    golden: 1000,
+                    diamond: 100000,
+                    cosmic: 10000000
+                };
+                
+                let newEvolution = 'basic';
+                if (this.totalEggsAllTime >= evolutionThresholds.cosmic) newEvolution = 'cosmic';
+                else if (this.totalEggsAllTime >= evolutionThresholds.diamond) newEvolution = 'diamond';
+                else if (this.totalEggsAllTime >= evolutionThresholds.golden) newEvolution = 'golden';
+                
+                if (newEvolution !== this.eggEvolution) {
+                    this.eggEvolution = newEvolution;
+                    egg.className = `egg ${newEvolution}`;
+                    this.showNotification(`🚀 Evolution erreicht!`, `Dein Ei ist jetzt ${newEvolution.toUpperCase()}!`);
+                }
+                
+                // Nächste Evolution anzeigen
+                const nextThresholds = {
+                    basic: { next: 'golden', amount: 1000 },
+                    golden: { next: 'diamond', amount: 100000 },
+                    diamond: { next: 'cosmic', amount: 10000000 },
+                    cosmic: { next: 'MAX', amount: Infinity }
+                };
+                
+                const nextEvolution = nextThresholds[this.eggEvolution];
+                if (nextEvolution.amount !== Infinity) {
+                    document.getElementById('nextEvolution').textContent = this.formatNumber(nextEvolution.amount);
+                } else {
+                    document.getElementById('nextEvolution').textContent = 'MAX LEVEL!';
+                }
+            }
+
+            // ⭐ PRESTIGE-SYSTEM
+            prestige() {
+                const requiredEggs = 1000000;
+                if (this.totalEggsAllTime < requiredEggs) return;
+
+                const goldenEggsGained = Math.floor(Math.sqrt(this.totalEggsAllTime / 1000000));
+                this.goldenEggs += goldenEggsGained;
+                this.prestigeLevel++;
+
+                // Reset (aber behalte goldene Eier und gekaufte Upgrades)
+                this.eggs = 0;
+                this.totalEggs = 0;
+                this.clickPower = 1;
+                this.baseClickPower = 1;
+                this.totalClicks = 0;
+                this.producers.forEach(producer => {
+                    producer.count = 0;
+                    producer.cost = producer.baseCost;
+                });
+
+                this.calculateEggsPerSecond();
+                this.updateDisplay();
+                this.checkAchievements();
+                
+                // Prestige-Sound abspielen
+                this.playPrestigeSound();
+                
+                this.showNotification('⭐ PRESTIGE!', `+${goldenEggsGained} goldene Eier erhalten!`);
+            }
+
+            // 🏆 ERFOLGE ÜBERPRÜFEN
+            checkAchievements() {
+                this.achievements.forEach(achievement => {
+                    if (!achievement.unlocked && achievement.condition()) {
+                        achievement.unlocked = true;
+                        this.playAchievementSound();
+                        this.showNotification('🏆 Erfolg freigeschaltet!', `${achievement.name}: ${achievement.desc}`);
+                    }
+                });
+            }
+
+            // 🎮 HAUPT-GAME-LOOP (PERFORMANCE-OPTIMIERT)
+            startGameLoop() {
+                let frameCount = 0;
+                
+                setInterval(() => {
+                    const now = Date.now();
+                    const deltaTime = (now - this.lastUpdate) / 1000;
+                    frameCount++;
+                    
+                    // Passive Eierproduktion
+                    if (this.eggsPerSecond > 0) {
+                        const eggsGained = this.eggsPerSecond * deltaTime;
+                        this.eggs += eggsGained;
+                        this.totalEggs += eggsGained;
+                        this.totalEggsAllTime += eggsGained;
+                        
+                        // Auto-Klick-Effekt nur alle 2 Sekunden für Performance
+                        if (frameCount % 20 === 0 && Math.random() < 0.3) {
+                            this.createAutoClickEffect();
+                        }
+                    }
+                    
+                    // Auto-Clicker
+                    if (this.autoClickerActive && (!this.lastAutoClick || now - this.lastAutoClick > 1000)) {
+                        this.autoClick();
+                        this.lastAutoClick = now;
+                    }
+                    
+                    // Spielzeit aktualisieren
+                    this.playTime = now - this.playTimeStart;
+                    
+                    // Fast-Click Mode Detection (für High CPS)
+                    const clicksPerSecond = this.totalClicks / ((now - this.playTimeStart) / 1000);
+                    this.fastClickMode = clicksPerSecond > 10;
+                    
+                    this.lastUpdate = now;
+                    
+                    // Display-Update weniger häufig bei schnellem Klicken
+                    if (frameCount % (this.fastClickMode ? 3 : 1) === 0) {
+                        this.updateDisplay();
+                        this.updateEggEvolution();
+                        this.checkAchievements();
+                    }
+                }, 50); // 20 FPS für bessere Performance bei High CPS
+            }
+
+            // 🤖 AUTO-CLICK FUNKTION
+            autoClick() {
+                const clickMultiplier = this.calculateClickMultiplier();
+                const eggsGained = this.baseClickPower * clickMultiplier;
+                
+                this.eggs += eggsGained;
+                this.totalEggs += eggsGained;
+                this.totalEggsAllTime += eggsGained;
+                this.totalClicks++;
+                
+                this.createAutoClickEffect();
+            }
+
+            // 🤖 AUTO-KLICK-EFFEKT
+            createAutoClickEffect() {
+                const mainEgg = document.getElementById('mainEgg');
+                const effect = document.createElement('div');
+                effect.className = 'auto-clicker-effect';
+                mainEgg.parentNode.appendChild(effect);
+                
+                setTimeout(() => effect.remove(), 800);
+            }
+
+            // 🎉 BENACHRICHTIGUNGS-SYSTEM
+            showNotification(title, message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.innerHTML = `
+                    <h3 style="margin-bottom: 10px; font-size: 1.2em;">${title}</h3>
+                    <p style="margin: 0; font-size: 1em;">${message}</p>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideInRight 0.5s reverse';
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            }
+
+            // 📊 DISPLAY AKTUALISIEREN
+            updateDisplay() {
+                document.getElementById('eggCount').textContent = this.formatNumber(Math.floor(this.eggs));
+                document.getElementById('eggsPerSecond').textContent = this.formatNumber(this.eggsPerSecond, 1);
+                document.getElementById('clickPower').textContent = this.formatNumber(this.baseClickPower * this.calculateClickMultiplier());
+                document.getElementById('goldenEggs').textContent = this.formatNumber(this.goldenEggs);
+                document.getElementById('totalClicks').textContent = this.formatNumber(this.totalClicks);
+                document.getElementById('totalEggs').textContent = this.formatNumber(this.totalEggsAllTime);
+                document.getElementById('playTime').textContent = this.formatTime(this.playTime);
+                document.getElementById('eggEvolution').textContent = this.eggEvolution.toUpperCase();
+                document.getElementById('highestEPS').textContent = this.formatNumber(this.highestEPS, 1);
+
+                this.updateUpgradesList();
+                this.updatePrestigeInfo();
+                this.updateAchievements();
+            }
+
+            // 🏪 UPGRADES-LISTE AKTUALISIEREN
+            updateUpgradesList() {
+                const container = document.getElementById('upgradesList');
+                container.innerHTML = '';
+
+                let upgrades = [];
+                
+                if (this.currentCategory === 'producers') {
+                    upgrades = this.producers;
+                } else if (this.currentCategory === 'multipliers') {
+                    upgrades = this.multiplierUpgrades;
+                } else if (this.currentCategory === 'special') {
+                    upgrades = this.specialUpgrades;
+                }
+
+                upgrades.forEach(upgrade => {
+                    let canAfford = false;
+                    let displayCost = '';
+                    let isOwned = false;
+                    
+                    if (this.currentCategory === 'producers') {
+                        canAfford = this.eggs >= upgrade.cost;
+                        displayCost = this.formatNumber(upgrade.cost);
+                    } else {
+                        canAfford = this.eggs >= upgrade.cost && !upgrade.purchased;
+                        displayCost = upgrade.purchased ? 'GEKAUFT' : this.formatNumber(upgrade.cost);
+                        isOwned = upgrade.purchased;
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = `upgrade-item ${canAfford && !isOwned ? 'can-afford' : 'cannot-afford'}`;
+                    
+                    let upgradeContent = `
+                        <div class="upgrade-header">
+                            <div style="display: flex; align-items: center;">
+                                <span class="upgrade-icon">${upgrade.emoji}</span>
+                                <span class="upgrade-name">${upgrade.name}</span>
+                            </div>
+                            <span class="upgrade-cost">${displayCost}</span>
+                        </div>
+                    `;
+                    
+                    if (this.currentCategory === 'producers') {
+                        upgradeContent += `
+                            <div class="upgrade-info">
+                                <span class="upgrade-count">Besitzt: ${upgrade.count}</span>
+                                <span class="upgrade-production">${this.formatNumber(upgrade.production)} Eier/Sek</span>
+                            </div>
+                        `;
+                    } else if (this.currentCategory === 'multipliers') {
+                        let effectText = '';
+                        if (upgrade.type === 'click_multiplier') {
+                            effectText = `Klick-Power x${upgrade.effect}`;
+                        } else if (upgrade.type === 'production_multiplier') {
+                            effectText = `Produktion x${upgrade.effect}`;
+                        }
+                        upgradeContent += `
+                            <div class="upgrade-info">
+                                <span class="upgrade-production">${effectText}</span>
+                                ${isOwned ? '<span class="upgrade-count">✅ AKTIV</span>' : ''}
+                            </div>
+                        `;
+                    } else if (this.currentCategory === 'special') {
+                        upgradeContent += `
+                            <div class="upgrade-info">
+                                ${isOwned ? '<span class="upgrade-count">✅ AKTIV</span>' : '<span class="upgrade-count">🔒 LOCKED</span>'}
+                            </div>
+                        `;
+                    }
+                    
+                    upgradeContent += `<div class="upgrade-description">${upgrade.description}</div>`;
+                    
+                    div.innerHTML = upgradeContent;
+                    
+                    if (canAfford && !isOwned) {
+                        div.addEventListener('click', () => this.buyUpgrade(upgrade.id, this.currentCategory));
+                    }
+                    
+                    container.appendChild(div);
+                });
+            }
+
+            // ⭐ PRESTIGE-INFO AKTUALISIEREN
+            updatePrestigeInfo() {
+                const requiredEggs = 1000000;
+                const canPrestige = this.totalEggsAllTime >= requiredEggs;
+                const goldenEggsGain = Math.floor(Math.sqrt(this.totalEggsAllTime / requiredEggs));
+                const progress = Math.min((this.totalEggsAllTime / requiredEggs) * 100, 100);
+                const prestigeBonus = this.goldenEggs;
+
+                document.getElementById('prestigeGain').textContent = this.formatNumber(goldenEggsGain);
+                document.getElementById('prestigeBonus').textContent = this.formatNumber(prestigeBonus);
+                document.getElementById('prestigeBtn').disabled = !canPrestige;
+                document.getElementById('prestigeProgress').style.width = progress + '%';
+            }
+
+            // 🏆 ERFOLGE AKTUALISIEREN
+            updateAchievements() {
+                const container = document.getElementById('achievementsList');
+                container.innerHTML = '';
+
+                this.achievements.forEach(achievement => {
+                    const div = document.createElement('div');
+                    div.className = `achievement ${achievement.unlocked ? 'unlocked' : ''}`;
+                    
+                    div.innerHTML = `
+                        <div class="achievement-name">
+                            ${achievement.unlocked ? '✅' : '🔒'} ${achievement.name}
+                        </div>
+                        <div class="achievement-desc">${achievement.desc}</div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            }
+
+            // 🛠️ HILFSFUNKTIONEN
+            getTotalUpgrades() {
+                return this.producers.reduce((total, p) => total + p.count, 0) +
+                       this.multiplierUpgrades.filter(m => m.purchased).length +
+                       this.specialUpgrades.filter(s => s.purchased).length;
+            }
+
+            hasSpecialUpgrade(upgradeId) {
+                const upgrade = this.specialUpgrades.find(u => u.id === upgradeId);
+                return upgrade && upgrade.purchased;
+            }
+
+            formatNumber(num, decimals = 0) {
+                if (num < 1000) return num.toFixed(decimals);
+                if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+                if (num < 1000000000) return (num / 1000000).toFixed(1) + 'M';
+                if (num < 1000000000000) return (num / 1000000000).toFixed(1) + 'B';
+                if (num < 1000000000000000) return (num / 1000000000000).toFixed(1) + 'T';
+                return (num / 1000000000000000).toFixed(1) + 'Q';
+            }
+
+            formatTime(ms) {
+                const seconds = Math.floor(ms / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                
+                if (hours > 0) return `${hours}h ${minutes % 60}m`;
+                if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+                return `${seconds}s`;
+            }
+
+            // 💾 SPEICHER-SYSTEM
+            saveGame() {
+                const saveData = {
+                    version: '2.0',
+                    eggs: this.eggs,
+                    totalEggs: this.totalEggs,
+                    totalEggsAllTime: this.totalEggsAllTime,
+                    baseClickPower: this.baseClickPower,
+                    totalClicks: this.totalClicks,
+                    goldenEggs: this.goldenEggs,
+                    prestigeLevel: this.prestigeLevel,
+                    playTimeStart: this.playTimeStart,
+                    highestEPS: this.highestEPS,
+                    eggEvolution: this.eggEvolution,
+                    producers: this.producers.map(p => ({
+                        id: p.id,
+                        count: p.count,
+                        cost: p.cost
+                    })),
+                    multiplierUpgrades: this.multiplierUpgrades.map(m => ({
+                        id: m.id,
+                        purchased: m.purchased
+                    })),
+                    specialUpgrades: this.specialUpgrades.map(s => ({
+                        id: s.id,
+                        purchased: s.purchased
+                    })),
+                    achievements: this.achievements.map(a => ({
+                        id: a.id,
+                        unlocked: a.unlocked
+                    })),
+                    lastSave: Date.now()
+                };
+                
+                localStorage.setItem('eggEmpireSave', JSON.stringify(saveData));
+            }
+
+            loadGame() {
+                try {
+                    const saveData = localStorage.getItem('eggEmpireSave');
+                    if (!saveData) return;
+
+                    const data = JSON.parse(saveData);
+                    if (!data.version) return; // Alte Saves ignorieren
+
+                    // Grundwerte laden
+                    this.eggs = data.eggs || 0;
+                    this.totalEggs = data.totalEggs || 0;
+                    this.totalEggsAllTime = data.totalEggsAllTime || 0;
+                    this.baseClickPower = data.baseClickPower || 1;
+                    this.totalClicks = data.totalClicks || 0;
+                    this.goldenEggs = data.goldenEggs || 0;
+                    this.prestigeLevel = data.prestigeLevel || 0;
+                    this.playTimeStart = data.playTimeStart || Date.now();
+                    this.highestEPS = data.highestEPS || 0;
+                    this.eggEvolution = data.eggEvolution || 'basic';
+
+                    // Produzenten laden
+                    if (data.producers) {
+                        data.producers.forEach(savedProducer => {
+                            const producer = this.producers.find(p => p.id === savedProducer.id);
+                            if (producer) {
+                                producer.count = savedProducer.count || 0;
+                                producer.cost = savedProducer.cost || producer.baseCost;
+                            }
+                        });
+                    }
+
+                    // Multiplikator-Upgrades laden
+                    if (data.multiplierUpgrades) {
+                        data.multiplierUpgrades.forEach(savedUpgrade => {
+                            const upgrade = this.multiplierUpgrades.find(u => u.id === savedUpgrade.id);
+                            if (upgrade) {
+                                upgrade.purchased = savedUpgrade.purchased || false;
+                            }
+                        });
+                    }
+
+                    // Spezial-Upgrades laden
+                    if (data.specialUpgrades) {
+                        data.specialUpgrades.forEach(savedUpgrade => {
+                            const upgrade = this.specialUpgrades.find(u => u.id === savedUpgrade.id);
+                            if (upgrade) {
+                                upgrade.purchased = savedUpgrade.purchased || false;
+                                
+                                // Spezial-Effekte reaktivieren
+                                if (upgrade.id === 'auto_clicker' && upgrade.purchased) {
+                                    this.autoClickerActive = true;
+                                }
+                            }
+                        });
+                    }
+
+                    // Erfolge laden
+                    if (data.achievements) {
+                        data.achievements.forEach(savedAchievement => {
+                            const achievement = this.achievements.find(a => a.id === savedAchievement.id);
+                            if (achievement) {
+                                achievement.unlocked = savedAchievement.unlocked || false;
+                            }
+                        });
+                    }
+
+                    // Offline-Produktion berechnen
+                    if (data.lastSave && this.hasSpecialUpgrade('offline_production')) {
+                        const offlineTime = (Date.now() - data.lastSave) / 1000;
+                        if (offlineTime > 60) { // Mindestens 1 Minute offline
+                            this.calculateEggsPerSecond();
+                            const maxOfflineHours = 24; // Maximum 24 Stunden
+                            const offlineHours = Math.min(offlineTime / 3600, maxOfflineHours);
+                            const offlineEggs = this.eggsPerSecond * offlineHours * 3600 * 0.5; // 50% Effizienz offline
+                            
+                            if (offlineEggs > 0) {
+                                this.eggs += offlineEggs;
+                                this.totalEggs += offlineEggs;
+                                this.totalEggsAllTime += offlineEggs;
+                                
+                                this.showNotification(
+                                    '💤 Willkommen zurück!',
+                                    `Du warst ${this.formatTime(offlineTime * 1000)} offline und hast ${this.formatNumber(offlineEggs)} Eier produziert!`
+                                );
+                            }
+                        }
+                    }
+
+                    this.calculateEggsPerSecond();
+                    this.updateEggEvolution();
+
+                } catch (error) {
+                    console.error('Fehler beim Laden des Spielstands:', error);
+                }
+            }
+
+            // 🎯 CHEAT-CODES (für Testzwecke)
+            addEggs(amount) {
+                this.eggs += amount;
+                this.totalEggs += amount;
+                this.totalEggsAllTime += amount;
+                this.updateDisplay();
+                this.updateEggEvolution();
+            }
+
+            addGoldenEggs(amount) {
+                this.goldenEggs += amount;
+                this.updateDisplay();
+            }
+        }
+
+        // 🚀 SPIEL STARTEN
+        let game;
+        window.addEventListener('load', () => {
+            game = new EggEmpire();
+            
+            // Debug-Funktionen für Konsole
+            window.debugEggs = (amount) => game.addEggs(amount);
+            window.debugGolden = (amount) => game.addGoldenEggs(amount);
+            window.debugSave = () => game.saveGame();
+            window.debugReset = () => {
+                localStorage.removeItem('eggEmpireSave');
+                location.reload();
+            };
+            
+            console.log('🥚 EGG EMPIRE geladen!');
+            console.log('Debug-Befehle: debugEggs(anzahl), debugGolden(anzahl), debugSave(), debugReset()');
+        });
+
+        // Spiel vor Schließen speichern
+        window.addEventListener('beforeunload', () => {
+            if (game) game.saveGame();
+        });
+    </script>
+</body>
+</html> Header -->
+        <div class="header">
+            <h1 class="title">🥚 EGG EMPIRE 🥚</h1>
+            <p style="font-size: 1.2em; margin-bottom: 20px;">Baue dein ultimatives Eier-Imperium auf!</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="eggCount">0</div>
+                    <div class="stat-label">Eier</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="eggsPerSecond">0</div>
+                    <div class="stat-label">Eier/Sek</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="clickPower">1</div>
+                    <div class="stat-label">Klick-Power</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalClicks">0</div>
+                    <div class="stat-label">Klicks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="goldenEggs">0</div>
+                    <div class="stat-label">🌟 Goldene Eier</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hauptspielbereich -->
+        <div class="main-game">
+            <div class="egg-evolution">
+                <div class="egg basic" id="mainEgg"></div>
+            </div>
+            <p style="font-size: 1.3em; font-weight: 600;">Klicke auf das Ei für Eier-Power! 🚀</p>
+            <div style="margin-top: 20px; text-align: center;">
+                <p style="font-size: 1.1em;">Nächste Evolution bei: <span id="nextEvolution" class="rainbow-text">1,000</span> Eiern</p>
+            </div>
+        </div>
+
+        <!-- Upgrades -->
+        <div class="upgrades-section">
+            <h2 class="section-title">⚡ UPGRADES</h2>
+            <div class="upgrade-tabs">
+                <button class="tab active" data-category="producers">🏭 Produzenten</button>
+                <button class="tab" data-category="multipliers">✨ Multiplikatoren</button>
+                <button class="tab" data-category="special">🌟 Spezial</button>
+            </div>
+            <div id="upgradesList"></div>
+        </div>
+
+        <!-- Stats & Prestige -->
+        <div class="stats-section">
+            <h2 class="section-title">📊 STATS</h2>
+            
+            <!-- Prestige -->
+            <div class="prestige-container">
+                <h3 style="color: var(--primary-gold); margin-bottom: 15px;">⭐ PRESTIGE SYSTEM</h3>
+                <p>Goldene Eier: <span id="prestigeGain" class="rainbow-text">0</span></p>
+                <p style="margin: 10px 0;">Bonus: +<span id="prestigeBonus">0</span>%</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="prestigeProgress"></div>
+                </div>
+                <button class="prestige-button" id="prestigeBtn">
+                    PRESTIGE für <span id="prestigeCost">1,000,000</span>
+                </button>
+            </div>
+
+            <!-- Weitere Stats -->
+            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                <h4 style="color: var(--primary-gold); margin-bottom: 10px;">🎯 Spielstatistiken</h4>
+                <p>Gesamt-Eier: <span id="totalEggs">0</span></p>
+                <p>Spielzeit: <span id="playTime">0s</span></p>
+                <p>Evolutionsstufe: <span id="eggEvolution">Basic</span></p>
+                <p>Höchster EPS: <span id="highestEPS">0</span></p>
+            </div>
+        </div>
+
+        <!-- Erfolge -->
+        <div class="achievements-section">
+            <h2 class="section-title">🏆 ERFOLGE</h2>
+            <div id="achievementsList"></div>
+        </div>
+    </div>
+
+    <!--
